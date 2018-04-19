@@ -4,17 +4,17 @@
       <div slot="top">
         <div class="form-item">
           <span>账号：</span>
-          <el-input placeholder="请输入账号" v-model="formData.name"></el-input>
+          <el-input placeholder="请输入账号" v-model="formData.account"></el-input>
         </div>
         <div class="form-item">
           <span>所属区域：</span>
-          <city-select @selectCity="selectCity"></city-select>
+          <city-select @selectCity="selectCity" :level="2"></city-select>
         </div>
       </div>
       <div slot="bottom">
         <div class="form-item">
           <span>账号状态：</span>
-          <el-select v-model="formData.attr" placeholder="请选择账号状态">
+          <el-select v-model="formData.status" placeholder="请选择账号状态">
             <el-option
               v-for="item in attrList"
               :key="item.value"
@@ -45,42 +45,40 @@
             </el-date-picker>
           </div>
         </div>
-
       </div>
       <div slot="btn-group">
         <el-button type="primary" class="add-btn" icon="el-icon-plus" @click.stop="goAdd">添加账号</el-button>
         <el-button type="primary" class="select-btn" icon="el-icon-search" @click="select">筛选</el-button>
       </div>
     </top-filter>
-    <common-table :tableHeader="tableHeader" :tableData="tableData"></common-table>
+    <common-table :tableHeader="tableHeader" :tableData="tableData" @deleteAll="deleteAll"></common-table>
     <div class="pagination">
       <el-pagination
         background
         layout="prev, pager, next"
-        :total="1000"
+        :total="total"
         @current-change="loadPage"
+        :page-size="this.formData.pageSize"
+        :page-count="pageCount"
       >
       </el-pagination>
     </div>
     <common-model class="add-agent" title="添加账号" :show="showAddModel" @closeModel="add_cancel">
-      <el-form class="add-agent-box" label-width="100px">
+      <el-form class="add-agent-box" label-width="110px" :model="addForm" :rules="rules" ref="add_Form">
 
-        <el-form-item label="账号：">
-          <el-input placeholder="请输入账号"></el-input>
+        <el-form-item label="账号：" prop="account" v-if="!addForm.id">
+          <el-input placeholder="请输入账号" v-model="addForm.account"></el-input>
+        </el-form-item>
+        <el-form-item label="代理商名称：" prop="name">
+          <el-input placeholder="请输入代理商名称" v-model="addForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="所属区域：" prop="provinceCode">
+          <city-select @selectCity="addSelectCity" :area="addForm.area" :level="2"></city-select>
         </el-form-item>
 
-        <el-form-item label="所属区域：">
-          <city-select @selectCity="addSelectCity"></city-select>
+        <el-form-item label="磁盘容量：" prop="diskSize" v-if="!addForm.id">
+          <el-input placeholder="请输入磁盘容量" v-model="addForm.diskSize"></el-input>
         </el-form-item>
-
-        <el-form-item label="磁盘容量：">
-          <el-input placeholder="请输入磁盘容量"></el-input>
-        </el-form-item>
-
-        <el-form-item label="账号分类：">
-
-        </el-form-item>
-
         <div class="tips">注：添加的账号密码默认为“111111”，请提示代理商登录后先修改密码后再进行操作</div>
       </el-form>
       <div class="btn-group">
@@ -97,6 +95,8 @@
   import citySelect from '../../../component/citySelect.vue'
   import commonTable from '../../../component/table.vue'
   import commonModel from '../../../component/commonModel.vue'
+  import Api from '../../../api/api'
+  import {code, filePre} from '../../../config/config'
   export default{
     components: {
       topFilter,
@@ -106,7 +106,17 @@
     },
     data(){
       return {
-        formData: {},
+        formData: {
+          account: '',
+          endTime: '',
+          pageNum: 1,
+          pageSize: 10,
+          startTime: '',
+          status: '',
+          cityCode: '',
+          provinceCode: '',
+          area: []
+        },
         showAddModel: false,
         attrList: [
           {label: '启用', value: 0},
@@ -115,12 +125,12 @@
         tableData: [],
         tableHeader: [
           {
-            label: '账号',
-            prop: 'account'
+            label: '名称',
+            prop: 'name'
           },
           {
-            label: '所属区域',
-            prop: 'area'
+            label: '账号',
+            prop: 'account'
           },
           {
             label: '创建时间',
@@ -128,7 +138,7 @@
           },
           {
             label: '用户数量',
-            prop: 'userNum'
+            prop: 'accountNum'
           },
           {
             label: '项目数量',
@@ -136,27 +146,22 @@
           },
           {
             label: '磁盘容量',
-            prop: 'total'
+            prop: 'diskLabel'
           },
           {
             label: '登录次数',
-            prop: 'times'
+            prop: 'loginNum'
           },
           {
             label: '最后登录时间',
-            prop: 'lastTime'
+            prop: 'lastLoginTime'
           },
           {
             label: '账号状态',
-            prop: 'status'
+            prop: 'statusLabel'
           },
         ],
         operation: [ //启用状态下操作
-          {
-            label: '用户',
-            color: '#20a7fe',
-            handle: this.lookUser,
-          },
           {
             label: '修改',
             color: '#07c362',
@@ -172,13 +177,13 @@
             color: '#adadad',
             handle: this.resetPassWord,
           },
-        ],
-        operation1: [ //启用状态下操作
           {
-            label: '用户',
-            color: '#20a7fe',
-            handle: this.lookUser,
+            label: '删除',
+            color: '#ff5656',
+            handle: this.delete,
           },
+        ],
+        operation1: [ //停用状态下操作
           {
             label: '修改',
             color: '#07c362',
@@ -194,40 +199,201 @@
             color: '#adadad',
             handle: this.resetPassWord,
           },
+          {
+            label: '删除',
+            color: '#ff5656',
+            handle: this.delete,
+          },
         ],
+        pageCount: 1,
+        total: 1,
+        addForm: {
+          account: '',
+          cityCode: '',
+          cityName: '',
+          diskSize: '',
+          name: '',
+          password: '111111',
+          provinceCode: '',
+          provinceName: '',
+          id: null
+        },
+        rules: {
+          account: [
+            {required: true, message: '请输入代理商账号', trigger: 'blur'},
+            {min: 1, max: 20, message: '名称为1-20位汉子、字母、数字、特殊字符', trigger: 'blur'}
+          ],
+          name: [
+            {required: true, message: '请输入代理商名称', trigger: 'blur'},
+            {min: 1, max: 20, message: '名称为1-20位汉子、字母、数字、特殊字符', trigger: 'blur'}
+          ],
+          diskSize: [
+            {required: true, message: '请输入磁盘容量', trigger: 'blur'},
+          ],
+          provinceCode: [
+            {required: true, message: '请选择区域', trigger: 'blur'},
+          ],
+        },
+        area: []
       }
+    },
+    created(){
+      this.getList()
     },
     methods: {
       goAdd(){ // 添加账号
         this.showAddModel = true
       },
       add_confirm(){
+        this.$refs.add_Form.validate(async flag => {
+          if (flag) {
+            this.addForm.diskSize = parseInt(this.addForm.diskSize) * 1024 * 1024
+            let data = await Api.systemAccount.add(this.addForm)
+            if (data.code === code.SUCCESS) {
+              this.$message.success('添加成功')
+              this.getList()
+              this.add_cancel()
+            } else {
+              this.$message.error(data.mesg)
+            }
+          }
+        })
       },
       add_cancel(){
+        this.addForm = {
+          account: '',
+          cityCode: '',
+          cityName: '',
+          diskSize: '',
+          name: '',
+          password: '111111',
+          provinceCode: '',
+          provinceName: '',
+          id: null,
+          area: []
+        }
         this.showAddModel = false
       },
-      addSelectCity(){// 添加账号选择城市
-
+      addSelectCity(data){// 添加账号选择城市
+        this.addForm.cityName = data.city.name
+        this.addForm.cityCode = data.city.id
+        this.addForm.provinceName = data.province.name
+        this.addForm.provinceCode = data.province.id
       },
       select(){ // 筛选
+        this.formData.pageNum = 1
+        this.getList()
       },
-      selectCity(){ // 筛选表单选择城市
+      selectCity(data){ // 筛选表单选择城市
+        this.formData.cityName = data.city.name
+        this.formData.cityCode = data.city.id
+        this.formData.provinceName = data.province.name
+        this.formData.provinceCode = data.province.id
       },
       lookUser(){ // 查看用户
 
       },
-      edit(){ // 修改
-
+      edit(index, item){ // 修改
+        Object.assign(this.addForm, item)
+        this.addForm.area = [this.addForm.provinceCode, this.addForm.cityCode]
+        this.addForm.password = null
+        this.showAddModel = true
       },
-      stop(){ // 停用
-
+      async resetPassWord(index, item){ // 重置密码
+        let data = await Api.systemAccount.updatePassword({
+          id: item.id,
+          newPassword: '111111'
+        })
+        if (data.code === code.SUCCESS) {
+          this.$message.success('重置密码成功')
+        } else {
+          this.$message.error(data.mesg)
+        }
       },
-      resetPassWord(){ // 重置密码
-
+      async deleteAll(arr){ // 批量删除
+        let result = [] //选中的id
+        let left = [] //没被选中的元素
+        this.tableData.forEach(item => {
+          if (arr.indexOf(item) >= 0) {
+            result.push(item.id)
+          } else {
+            left.push(item)
+          }
+        })
+        let data = await Api.systemAccount.deleteById({
+          ids: result
+        })
+        if (data.code === code.SUCCESS) {
+          this.tableData = left
+          this.$message.success('删除成功')
+        } else {
+          this.$message.success('删除失败')
+        }
       },
-      start(){ // 启用
-
-      }
+      async delete(index, item){
+        let data = await Api.systemAccount.deleteById({
+          ids: [item.id]
+        })
+        if (data.code === code.SUCCESS) {
+          this.tableData.splice(index, 1)
+          this.$message.success('删除成功')
+        } else {
+          this.$message.error('删除失败')
+        }
+      },
+      async stop(index, item){
+        let data = await Api.systemAccount.updateStatus({
+          id: item.id,
+          status: 1
+        })
+        if (data.code === code.SUCCESS) {
+          this.$message.success('停用成功')
+          item.status = 1
+          item.operation = this.operation1
+          item.statusLabel = '停用'
+        }
+      },
+      async start(index, item){
+        let data = await Api.systemAccount.updateStatus({
+          id: item.id,
+          status: 0
+        })
+        if (data.code === code.SUCCESS) {
+          this.$message.success('启用成功')
+          item.status = 0
+          item.operation = this.operation
+          item.statusLabel = '启用'
+        }
+      },
+      loadPage(currentPage){
+        this.formData.pageNum = currentPage
+        this.getList()
+      },
+      fileSize(val){
+        let kb = (val / 1024)
+        let mb = (kb / 1024)
+        let result = ''
+        if (kb >= 1024) {
+          return mb.toFixed(1) + '  mb'
+        } else {
+          return kb.toFixed(1) + '  kb'
+        }
+      },
+      async getList(){
+        let data = await Api.systemAccount.getList(this.formData)
+        this.total = data.data.allCount
+        this.pageCount = data.data.totalPage
+        data.data.list.forEach(item => {
+          item.statusLabel = item.status === 0 ? '启用' : '停用'
+          item.diskLabel =this.fileSize(item.diskSize)
+          if (item.status === 0) {
+            item.operation = this.operation
+          } else {
+            item.operation = this.operation1
+          }
+        })
+        this.tableData = data.data.list
+      },
     }
   }
 </script>

@@ -9,12 +9,15 @@ export default {
   isLogin: state => state.sysAuthUrls && state.sysUserBg && state.JSESSIONID,
   JSESSIONID: state => state.JSESSIONID,
   q_cityInfo: state => state.q_cityInfo,
-  defaultAreaSelect: state => state.defaultAreaSelect ||[state.q_cityInfo[0].id,
+  defaultAreaSelect: state => state.defaultAreaSelect || [state.q_cityInfo[0].id,
     state.q_cityInfo[0].nextArea[0].id,
     state.q_cityInfo[0].nextArea[0].nextArea[0].id
   ],
   source_Upload: state => uploadUrl.multipartUploadSource + ';JSESSIONID=' + state.JSESSIONID,
-  upload_file:state => uploadUrl.multipartUploadFile + ';JSESSIONID=' + state.JSESSIONID,
+  upload_file: state => uploadUrl.multipartUploadFile + ';JSESSIONID=' + state.JSESSIONID,
+  advertUpload: state => uploadUrl.advertUpload + ';JSESSIONID=' + state.JSESSIONID,
+  iconUpload: state => uploadUrl.iconUpload + ';JSESSIONID=' + state.JSESSIONID,
+  cateUpload: state => uploadUrl.cateUpload + ';JSESSIONID=' + state.JSESSIONID,
 }
 
 

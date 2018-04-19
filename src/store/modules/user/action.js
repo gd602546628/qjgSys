@@ -33,7 +33,7 @@ let login = function () {
   })
 }
 let getCityInfo = async function ({commit, state}) {
-  let data = await Api.area.areaCode()
+  let data = await Api.login.areaCode()
   let step = function (item) {
     item.label = item.name
     item.value = item.id

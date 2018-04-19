@@ -23,21 +23,16 @@ Vue.config.productionTip = false
 
 /*权限验证*/
 router.beforeEach((to, form, next) => {
-  if (isTest) {
-    if (store.getters.isLogin) {
-      next()
-    } else {
-      if (to.name != 'login') {
-        store.dispatch({type: 'loginAction', routeName: to.name, params: to.params}).then(function () {
-        })
-      } else {
-        next()
-      }
-    }
-  } else {
+  if (store.getters.isLogin) {
     next()
+  } else {
+    if (to.name !== 'login') {
+      store.dispatch({type: 'loginAction', routeName: to.name, params: to.params}).then(function () {
+      })
+    } else {
+      next()
+    }
   }
-
 })
 
 /* eslint-disable no-new */

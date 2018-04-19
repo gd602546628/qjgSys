@@ -8,7 +8,8 @@ let url = {
   login: `${urlPre}public/login`, //登录
   logout: `${urlPre}public/logout`,//退出
   getValidateCode: `${urlPre}public/getValidateCode`, // 获取验证码
-  getDoorInfo:`${urlPre}system/user/getDoorInfo`, // 获取店铺统计
+  getDoorInfo: `${urlPre}system/user/getDoorInfo`, // 获取店铺统计
+  areaCode: `${urlPre}public/areaCode/getAllArea`, // 获取所有行政区域
 }
 let login = {
   async login(params = {}, sessionId){
@@ -25,6 +26,10 @@ let login = {
   },
   async getDoorInfo(params = {}){
     let data = await httpService.post(url.getDoorInfo, params)
+    return data
+  },
+  async areaCode(params = {}) {
+    let data = await httpService.get(url.areaCode, params)
     return data
   },
 }

@@ -24,12 +24,19 @@
           <span slot="title">分类管理</span>
         </el-menu-item>
 
+        <el-menu-item index="areaManage">
+          <i class="icon-qygl title-icon"></i>
+          <span slot="title">区域管理</span>
+        </el-menu-item>
+
         <el-submenu index="systemManageIndex">
           <template slot="title">
             <i class="icon-select title-icon"></i>
             <span>系统设置</span>
           </template>
           <el-menu-item-group>
+            <el-menu-item index="roleManage">角色管理</el-menu-item>
+            <el-menu-item index="accountManage">账号管理</el-menu-item>
             <el-menu-item index="agentManage">代理商管理</el-menu-item>
           </el-menu-item-group>
         </el-submenu>

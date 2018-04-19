@@ -2,30 +2,46 @@
   <el-cascader
     placeholder="试试搜索：玉溪"
     expand-trigger="hover"
-    :options="q_cityInfo"
-    v-model="area"
+    :options="cityInfo"
+    v-model="bindArea"
     :props="cityInfoProp"
     @change="selectCity"
     filterable
   >
   </el-cascader>
 </template>
-
-
 <script>
   import {mapGetters} from 'vuex'
   export default{
+    props: {
+      level: {
+        type: Number,
+        default: 3
+      },
+      area: {
+        type: Array,
+        default: () => {
+          return []
+        }
+      }
+    },
     computed: {
-      ...mapGetters(['q_cityInfo'])
+      ...mapGetters(['q_cityInfo']),
+    },
+    created(){
+      this.getCityInfoByLevel()
+      this.bindArea = JSON.parse(JSON.stringify(this.area))
+      console.log(this.bindArea)
     },
     data(){
       return {
-        area: [],
         cityInfoProp: {
           label: 'name',
           value: 'id',
           children: 'nextArea'
         },
+        cityInfo: [],
+        bindArea: []
       }
     },
     methods: {
@@ -48,11 +64,30 @@
         return JSON.parse(JSON.stringify(result))
       },
       selectCity(val){
-        this.form.provinceCode = val[0]
-        this.form.cityCode = val[1]
-        this.form.countyCode = val[2]
-        this.$emit('selectCity')
+        let data = {
+          province: this.getCityObjById(val[0]),
+          city: this.getCityObjById(val[1]),
+          county: this.getCityObjById(val[2]),
+        }
+        console.log(this.bindArea)
+        this.$emit('selectCity', data)
       },
+      getCityInfoByLevel(){
+        this.cityInfo = JSON.parse(JSON.stringify(this.q_cityInfo))
+        let step = (item) => {
+          if (item.levelType === this.level) {
+            delete item.nextArea
+            //item.nextArea = null
+          } else {
+            item.nextArea.forEach((child) => {
+              step(child)
+            })
+          }
+        }
+        this.cityInfo.forEach(item => {
+          step(item)
+        })
+      }
     }
   }
 </script>

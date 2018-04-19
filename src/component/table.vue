@@ -19,10 +19,6 @@
           {{scope.$index + 1}}
 
 
-
-
-
-
         </template>
       </el-table-column>
       <el-table-column
@@ -41,22 +37,12 @@
               v-for="item in scope.row.operation"
               :style="{color:item.color}"
               @click="item.handle&&item.handle(scope.$index, scope.row)">{{item.label}}
-
-
-
-
             </div>
           </div>
         </template>
       </el-table-column>
     </el-table>
-    <div class="delete-btn" v-if="!hideDelete" @click.stop="deleteAll">
-      批量删除
-
-
-
-
-    </div>
+    <div class="delete-btn" v-if="!hideDelete" @click.stop="deleteAll">批量删除</div>
   </div>
 </template>
 

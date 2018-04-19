@@ -9,6 +9,7 @@ let url = {
   addOrUpdateRole: `${urlPre}system/role/addOrUpdateRole`,// 增加角色
   getUrls: `${urlPre}system/role/getUrls`, // 可配置角色权限列表
   deleteRole: `${urlPre}system/role/deleteRole`,// 删除角色
+  getRoleUrl: `${urlPre}system/role/getRole`,
 }
 let systemRole = {
   getAllRole: async function (params = {}) { //获取角色列表
@@ -28,8 +29,11 @@ let systemRole = {
   deleteRole: async function (params = {}) { //更新角色
     let data = await httpService.post(url.deleteRole, params)
     return data
+  },
+  getRole: async function (params = {}) { //更新角色
+    let data = await httpService.post(url.getRoleUrl, params)
+    return data
   }
-
 }
 
 export default systemRole

@@ -20,7 +20,7 @@
       init(){
         this.map = new BMap.Map(this.$refs.mapContent)
         this.map.enableScrollWheelZoom(true)
-        this.changePoint(this.point)
+        //  this.changePoint(this.point)
         this.map.addEventListener('click', (e) => {
           this.$emit('mapClick', e)
         })
@@ -50,9 +50,8 @@
       },
       pointToAddress(point){ //坐标转地址
         let myGeo = new BMap.Geocoder()
-        let [lat, lon] = point.split(',')
         return new Promise((resolve, reject) => {
-          myGeo.getLocation(new BMap.Point(lon, lat), (result) => {
+          myGeo.getLocation(point, (result) => {
             resolve(result)
           })
         })
@@ -72,6 +71,21 @@
           let local = new BMap.LocalSearch(this.map, options)
           local.search(address)
         })
+      },
+      async addPointByAddress(address){
+        let point = await this.addressToPoint(address)
+        this.map.centerAndZoom(point, 15)
+        let marker = new BMap.Marker(point)
+        this.removeOverlay()
+        this.map.addOverlay(marker)
+        return point
+      },
+      async addPoint(point){
+        this.map.centerAndZoom(point, 15)
+        let marker = new BMap.Marker(point)
+        this.removeOverlay()
+        this.map.addOverlay(marker)
+        return point
       }
     }
   }

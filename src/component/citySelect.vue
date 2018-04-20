@@ -31,7 +31,6 @@
     created(){
       this.getCityInfoByLevel()
       this.bindArea = JSON.parse(JSON.stringify(this.area))
-      console.log(this.bindArea)
     },
     data(){
       return {
@@ -69,7 +68,6 @@
           city: this.getCityObjById(val[1]),
           county: this.getCityObjById(val[2]),
         }
-        console.log(this.bindArea)
         this.$emit('selectCity', data)
       },
       getCityInfoByLevel(){

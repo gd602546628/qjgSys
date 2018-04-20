@@ -142,7 +142,7 @@
           },
           {
             label: '项目数量',
-            prop: 'projectNum'
+            prop: 'objectNum'
           },
           {
             label: '磁盘容量',
@@ -249,6 +249,7 @@
           if (flag) {
             this.addForm.diskSize = parseInt(this.addForm.diskSize) * 1024 * 1024
             let data = await Api.systemAccount.add(this.addForm)
+            this.addForm.diskSize = this.addForm.diskSize / 1024 / 1024
             if (data.code === code.SUCCESS) {
               this.$message.success('添加成功')
               this.getList()
@@ -385,7 +386,7 @@
         this.pageCount = data.data.totalPage
         data.data.list.forEach(item => {
           item.statusLabel = item.status === 0 ? '启用' : '停用'
-          item.diskLabel =this.fileSize(item.diskSize)
+          item.diskLabel = this.fileSize(item.diskSize)
           if (item.status === 0) {
             item.operation = this.operation
           } else {
